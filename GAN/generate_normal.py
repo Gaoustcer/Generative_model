@@ -12,9 +12,9 @@ UPDATEDTIME = 16
 import torch
 import matplotlib.pyplot as plt
 D_net = Discriminator().to(torch.device('cuda:0'))
-D_optim = torch.optim.Adam(D_net.parameters(),lr=0.001)
+D_optim = torch.optim.Adam(D_net.parameters(),lr=0.00001)
 G_net = Generator().to(torch.device('cuda:0'))
-G_optimizer = torch.optim.Adam(G_net.parameters(),lr=0.001)
+G_optimizer = torch.optim.Adam(G_net.parameters(),lr=0.00001)
 from torch.nn import BCELoss
 
 # def print(x,y,c,figname):
@@ -33,6 +33,8 @@ if __name__ == "__main__":
     from tqdm import tqdm
     normal = Normal(0,1)
     lossfunc = BCELoss()
+    from torch.utils.tensorboard import SummaryWriter
+    writer = SummaryWriter('./log/GANtrain')
     for epoch in tqdm(range(EPOCH)):
         for _ in range(UPDATEDTIME):
             realsample = normal.sample((BATCHSIZE,Distributionsize)).cuda()
@@ -41,24 +43,40 @@ if __name__ == "__main__":
             D_optim.zero_grad()
             loss = 0
             realpredict = D_net(realsample)
-            loss += lossfunc(realpredict[:,0],torch.ones_like(realpredict[:,0]))
+            # print("shape of predict is ",realpredict.shape)
+            # print("possibility is",realpredict)
+            # print("mean is ",realpredict.mean())
+            # exit()
+            loss -= realpredict.mean()
             # -log p_real p_real is larger
             fakepredict = D_net(fakeresult)
-            loss += lossfunc(fakepredict[:,1],torch.ones_like(fakepredict[:,1]))
+            fakepredict = torch.ones_like(fakepredict) - fakepredict
+            # print("fake is",fakepredict)
+            # exit()
+            loss -= fakepredict.mean()
             # -log (1-p_real)=-log p_fake
+            # loss = log p_real + log p_fake
             loss.backward()
         G_optimizer.zero_grad()
         noise = torch.rand((BATCHSIZE,32)).cuda()
-        GeneratorDiscrim = D_net(G_net(noise))[:,0]
-        loss = -lossfunc(GeneratorDiscrim,torch.ones_like(GeneratorDiscrim))
+        GeneratorDiscrim = D_net(G_net(noise))
+        # loss = 0
+        GeneratorDiscrim = torch.ones_like(GeneratorDiscrim) - GeneratorDiscrim
+        loss = GeneratorDiscrim.mean()
+        # loss = -log p_real
         # likelihood is p,BCEL return -log p for Generator we want p is samaller 
         loss.backward()
+        writer.add_scalar('lossgan',loss,epoch)
         G_optimizer.step()
         if epoch % 128 == 0:
-            noise = torch.rand((1,32)).cuda()
+            # noise = torch.rand((1,32)).cuda()
+            noise = noise[0]
+            noise = torch.reshape(noise,(1,32))
+            # print("noise shape",noise.shape)
             dis = G_net(noise).squeeze(0).detach().cpu()
             plt.hist(dis,bins=64)
             plt.savefig("./pic/figure"+str(int(epoch/128))+'.png')
+            print("from real data",D_net(G_net(noise)))
             plt.close()
             # print(dis.shape)
             # exit()
