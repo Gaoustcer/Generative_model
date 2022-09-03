@@ -12,6 +12,9 @@ class Generator(Module):
             nn.ReLU(),
             nn.Linear(128,BATCH_SIZE)
         )
+        for m in self.modules():
+            if isinstance(m,nn.Linear):
+                nn.init.zeros_(m.weight.data)
     
     def forward(self,x:torch.tensor):
         return self.linear(x)

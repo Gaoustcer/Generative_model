@@ -21,8 +21,15 @@ from torch.nn import BCELoss
 #     plt.scatter(x,y,c=c)
 #     plt.savefig(figname)
 #     plt.close()
+def _notrain():
+    x = torch.rand(32).cuda()
+    result = G_net(x).detach().cpu()
+    plt.hist(result,bins=64)
+    plt.savefig('./pic/train_from_scratch.png')
+    plt.close()
 
 if __name__ == "__main__":
+    _notrain()
     from tqdm import tqdm
     normal = Normal(0,1)
     lossfunc = BCELoss()
@@ -35,8 +42,10 @@ if __name__ == "__main__":
             loss = 0
             realpredict = D_net(realsample)
             loss += lossfunc(realpredict[:,0],torch.ones_like(realpredict[:,0]))
+            # -log p_real p_real is larger
             fakepredict = D_net(fakeresult)
-            loss += lossfunc(fakepredict[:,0],torch.ones_like(fakepredict[:,1]))
+            loss += lossfunc(fakepredict[:,1],torch.ones_like(fakepredict[:,1]))
+            # -log (1-p_real)=-log p_fake
             loss.backward()
         G_optimizer.zero_grad()
         noise = torch.rand((BATCHSIZE,32)).cuda()
