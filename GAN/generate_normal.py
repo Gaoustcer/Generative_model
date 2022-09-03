@@ -25,7 +25,7 @@ def _notrain():
     x = torch.rand(32).cuda()
     result = G_net(x).detach().cpu()
     plt.hist(result,bins=64)
-    plt.savefig('./pic/train_from_scratch.png')
+    plt.savefig('./picbce/train_from_scratch.png')
     plt.close()
 
 if __name__ == "__main__":
@@ -47,13 +47,15 @@ if __name__ == "__main__":
             # print("possibility is",realpredict)
             # print("mean is ",realpredict.mean())
             # exit()
-            loss -= realpredict.mean()
+            # loss -= realpredict.mean()
+            loss += lossfunc(realpredict,torch.ones_like(realpredict))
             # -log p_real p_real is larger
             fakepredict = D_net(fakeresult)
             fakepredict = torch.ones_like(fakepredict) - fakepredict
             # print("fake is",fakepredict)
             # exit()
-            loss -= fakepredict.mean()
+            # loss -= fakepredict.mean()
+            loss += lossfunc(fakepredict,torch.ones_like(fakepredict))
             # -log (1-p_real)=-log p_fake
             # loss = log p_real + log p_fake
             loss.backward()
@@ -61,12 +63,13 @@ if __name__ == "__main__":
         noise = torch.rand((BATCHSIZE,32)).cuda()
         GeneratorDiscrim = D_net(G_net(noise))
         # loss = 0
-        GeneratorDiscrim = torch.ones_like(GeneratorDiscrim) - GeneratorDiscrim
-        loss = GeneratorDiscrim.mean()
+        # GeneratorDiscrim = torch.ones_like(GeneratorDiscrim) - GeneratorDiscrim
+        # loss = GeneratorDiscrim.mean()
+        loss -= lossfunc(GeneratorDiscrim,torch.ones_like(GeneratorDiscrim))
         # loss = -log p_real
         # likelihood is p,BCEL return -log p for Generator we want p is samaller 
         loss.backward()
-        writer.add_scalar('lossgan',loss,epoch)
+        writer.add_scalar('lossgan/bce',loss,epoch)
         G_optimizer.step()
         if epoch % 128 == 0:
             # noise = torch.rand((1,32)).cuda()
@@ -75,7 +78,7 @@ if __name__ == "__main__":
             # print("noise shape",noise.shape)
             dis = G_net(noise).squeeze(0).detach().cpu()
             plt.hist(dis,bins=64)
-            plt.savefig("./pic/figure"+str(int(epoch/128))+'.png')
+            plt.savefig("./picbce/figure"+str(int(epoch/128))+'.png')
             print("from real data",D_net(G_net(noise)))
             plt.close()
             # print(dis.shape)
