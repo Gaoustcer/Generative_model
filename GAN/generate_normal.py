@@ -62,7 +62,7 @@ if __name__ == "__main__":
         G_optimizer.zero_grad()
         noise = torch.rand((BATCHSIZE,32)).cuda()
         GeneratorDiscrim = D_net(G_net(noise))
-        # loss = 0
+        loss = 0
         # GeneratorDiscrim = torch.ones_like(GeneratorDiscrim) - GeneratorDiscrim
         # loss = GeneratorDiscrim.mean()
         loss -= lossfunc(GeneratorDiscrim,torch.ones_like(GeneratorDiscrim))
@@ -73,8 +73,8 @@ if __name__ == "__main__":
         G_optimizer.step()
         if epoch % 128 == 0:
             # noise = torch.rand((1,32)).cuda()
-            noise = noise[0]
-            noise = torch.reshape(noise,(1,32))
+            noise = torch.rand((1,32))
+            noise = torch.reshape(noise,(1,32)).cuda()
             # print("noise shape",noise.shape)
             dis = G_net(noise).squeeze(0).detach().cpu()
             plt.hist(dis,bins=64)
