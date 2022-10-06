@@ -52,7 +52,7 @@ class Decoder(nn.Module):
             nn.ReLU(),
             nn.Linear(16,32),
             nn.ReLU(),
-            nn.Linear(16,64),
+            nn.Linear(32,64),
             nn.ReLU(),
             nn.Linear(64,28**2),
             nn.Sigmoid()
@@ -61,13 +61,14 @@ class Decoder(nn.Module):
         noise = self.noisegenerate.sample(mu.shape) * sigma + mu
         labelfeature = self.labelEncoder(labels)
         features = torch.concat([noise,labelfeature],-1)
-        print("Feature shape is",features.shape)
+        print("The Feature shape is",features.shape)
         return self.Picture(features)
-    pass
+    # pass
 
 
 if __name__ == "__main__":
     net = Encoder()
+    decoder = Decoder()
     from torch.utils.data import DataLoader
     loader = DataLoader(data_train,batch_size=64)
     for images,labels in loader:
@@ -75,7 +76,9 @@ if __name__ == "__main__":
         labelonhot = torch.zeros(images.shape[0],10)
         labelonhot.scatter_(-1,labels.unsqueeze(-1),1)
         print("labels is",labels.shape)
-        sigma,mu = net(images,labelonhot)
+        mu,sigma = net(images,labelonhot)
         print(sigma.shape)
         print(mu.shape)
+        pic = decoder(mu,sigma,labelonhot)
+        print("Picture shape is",pic.shape)
         exit()
