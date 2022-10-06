@@ -12,4 +12,4 @@ class CVAE(nn.Module):
         assert images.shape[0] == labels.shape[0]
         mu,sigma = self.encoder(images,labels)
         picture = self.decoder(mu,sigma,labels)
-        return torch.reshape(picture,[mu.shape[0],28,28])
+        return torch.reshape(picture,[mu.shape[0],28,28]),mu,sigma

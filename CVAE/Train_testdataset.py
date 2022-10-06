@@ -14,7 +14,7 @@ data_test = datasets.MNIST(root="./data/",
 if __name__ == "__main__":
     from torch.utils.data import DataLoader
     loader = DataLoader(data_train)
-    for data,labels in loader:
+    for data,labels in loader[:2]:
         print(data.shape)
         print(labels.shape)
         exit()
