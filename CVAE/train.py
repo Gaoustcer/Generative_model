@@ -11,9 +11,9 @@ class Train(object):
         self.CVAE = CVAE().cuda()
         self.traindata = DataLoader(data_train,batch_size=64)
         self.testdata = DataLoader(data_test,batch_size=1)
-        self.EPOCH = 32
+        self.EPOCH = 64
         self.writer = SummaryWriter("log/loss")
-        self.optimizer = torch.optim.Adam(self.CVAE.parameters(),lr = 0.0001)
+        self.optimizer = torch.optim.Adam(self.CVAE.parameters(),lr = 0.00001)
     def train(self):
         index = 0
         for epoch in range(self.EPOCH):
@@ -29,27 +29,38 @@ class Train(object):
                 KLdiv =  torch.log(torch.pow(sigma,2)) - torch.pow(sigma,2) - torch.pow(mu,2)
                 # print("KLdivergence",KLdiv.shape)
                 # print("Sigma,mu is",sigma.shape,mu.shape)
-                KLdiv = -0.5 * KLdiv.mean()
+                KLdiv = -0.5 * KLdiv.sum()
                 # print(KLdiv)
                 # exit()
                 loss += KLdiv
+                loss.backward()
+                self.writer.add_scalar("loss",loss,index)
                 self.optimizer.step()
                 index += 1
-                if index % 16 == 0:
-                    self.vaildation()
+                if index % 1024 == 0:
+                    self.vaildation(index//1024)
     def vaildation(self,index):
         path = "testresult/epoch{}".format(index)
-        os.mkdir(path)
+        if "epoch{}".format(index) not in os.listdir("testresult"):   
+            os.mkdir(path)
         validindex = 0
-        for testimages,labels in testimages:
+        for testimages,labels in self.testdata:
             testimages = testimages.cuda()
-            constructimages = self.CVAE(testimages).squeeze().cpu()
-            generateimage = T.ToPILImage(constructimages)
-            testimages = testimages.squueeze().cpu()
-            originimage = T.ToPILImage(testimages)
+            labels = labels.cuda()
+            labelhot = torch.zeros(testimages.shape[0],10).cuda()
+            labelhot.scatter_(-1,labels.unsqueeze(-1),1)
+            constructimages = self.CVAE(testimages,labelhot)[0].squeeze().cpu()
+            transform = T.ToPILImage()
+
+            testimages = testimages.squeeze().cpu()
+            generateimage = transform(constructimages)
+            originimage = transform(testimages)
             generateimage.save(path+"/generate{}.png".format(validindex))
             originimage.save(path+"/origin{}.png".format(validindex))
             validindex += 1
+            # print("validindex{}".format(validindex),constructimages)
+            # if validindex == 2:
+            #     exit()
             if validindex == 16:
                 return
 

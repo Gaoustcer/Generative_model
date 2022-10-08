@@ -61,7 +61,7 @@ class Decoder(nn.Module):
         noise = self.noisegenerate.sample(mu.shape).cuda() * sigma + mu
         labelfeature = self.labelEncoder(labels)
         features = torch.concat([noise,labelfeature],-1)
-        print("The Feature shape is",features.shape)
+        # print("The Feature shape is",features.shape)
         return self.Picture(features)
     # pass
 
