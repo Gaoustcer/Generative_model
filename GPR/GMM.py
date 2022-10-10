@@ -15,6 +15,9 @@ def normaldistance(x:np.ndarray,y:np.ndarray):
 
 def laplace(x:np.ndarray,y:np.ndarray):
     return np.exp(np.linalg.norm(x-y,1))
+matrix = np.random.random((K,K))
+def matrixdot(x,y):
+    x.dot(matrix).dot(y)
 def dot(x,y):
     return x.dot(y)
 def gaussiankernel(x:np.ndarray,y:np.ndarray):
@@ -27,7 +30,8 @@ def gaussiankernel(x:np.ndarray,y:np.ndarray):
             # kernel[i][j] = Gaussiandistance(x[i],y[j])
             # kernel[i][j] = normaldistance(x[i],y[j])
             # kernel[i][j] = dot(x[i],y[j])
-            kernel[i][j] = laplace(x[i],y[j])
+            # kernel[i][j] = laplace(x[i],y[j])
+            kernel[i][j] = matrixdot(x[i],y[j])
     # pass
     return kernel
 
@@ -53,4 +57,4 @@ DataCov = np.linalg.inv(DataCov)
 plt.savefig("Baseline.png")
 pred = np.matmul(Cov,DataCov).dot(label)
 plt.scatter(x=np.sum(XData,-1),y=pred,c='b',s=0.1)
-plt.savefig("laplace.png")
+plt.savefig("matrixdot.png")
