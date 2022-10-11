@@ -13,3 +13,4 @@ if __name__ == "__main__":
     for epoch in range(EPOCH):
         Variational_deduction.train()
         Variational_deduction.valid(path+"/Validation{}".format(epoch))
+        Variational_deduction.deduction(path+"/Generate{}".format(epoch))

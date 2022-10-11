@@ -38,7 +38,8 @@ class VAE(object):
 
     def valid(self,path):
         index = 0
-        os.mkdir(path)
+        if os.path.exists(path) == False:
+            os.mkdir(path)
         for image,_ in (self.testloader):
             if index == 16:
                 return
@@ -54,11 +55,16 @@ class VAE(object):
 
             index+= 1
     
-    def deduction(self):
+    def deduction(self,path):
+        if os.path.exists(path) == False:
+            os.mkdir(path)
         for index in range(16):
             mu = torch.zeros((1,16)).to(torch.float32).cuda()
             sigma = torch.ones((1,16)).to(torch.float32).cuda()
-            picture = self.decoder()
+            picture = self.decoder(mu,sigma)
+            picture = torch.reshape(picture,(28,28)).cpu().detach()
+            picture = self.transform(picture)
+            picture.save(os.path.join(path,"generate{}.png".format(index)))
         pass
 
     # def lossfunction(self,sigma,mu)
